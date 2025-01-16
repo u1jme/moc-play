@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
+  <title>James MOC</title>
+  <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="bootstrap.rtl.min.css">
+  <script>
+    function fileDiv(filename, id) {
+      var outerDiv, fileDiv;
+
+      fileDiv = document.createElement('button');
+      fileDiv.id = id;
+      fileDiv.textContent = filename;
+      fileDiv.className = 'btn btn-info btn-md';
+
+      outerDiv = document.createElement('div');
+      outerDiv.id = id;
+      outerDiv.className = 'col-sm-12 col-12'; 
+
+      outerDiv.appendChild(fileDiv);
+      return outerDiv;
+    }
+    function reqListener() {
+      var musicFiles, musicFile, musicFileNorm, idx, musicDiv;
+      musicFiles = JSON.parse(this.responseText);
+      if (!musicFiles || musicFiles == '') {
+        console.log("No response text");
+        return;
+      }
+      console.log(JSON.stringify(musicFiles));
+      musicDiv = document.getElementById('music');
+      if (!musicDiv) {
+        console.log("Cannot find 'music' div");
+        return;
+      }
+      idx = 1;
+      for (idx = 0; idx < musicFiles.length; idx++) {
+         musicFileNorm = musicFiles[idx].replace('/', '');
+         musicDiv.appendChild(fileDiv(musicFileNorm, 'file_' + (1+idx)));
+      }
+    }
+    function doPlay() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/mocplay");
+      req.send();
+    }
+    function doStop() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/mocstop");
+      req.send();
+    }
+    function doList() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/moclist");
+      req.send();
+    }
+  </script>
+</head>
+<body>
+   <div class="container">
+      <div class="row">
+         <div class="col-sm-12 col-12">
+            <h1> </h1>
+         </div>
+      </div>
+      <div class="row">
+         <div class="col-sm-12 col-12">
+            <h1>MOC Ubuntu-23</h1>
+         </div>
+      </div>
+      <div class="row">
+         <div class="col-sm-3 col-3">
+            <button onclick="doPlay()" class="btn btn-info btn-lg">Play</button>
+         </div>
+         <div class="col-sm-3 col-3">
+            <button onclick="doStop()" class="btn btn-danger btn-lg">Stop</button>
+         </div>
+         <div class="col-sm-3 col-3">
+            <button onclick="doList()" class="btn btn-danger btn-lg">List</button>
+         </div>
+      </div>
+      <div id="music">
+      </div>
+   </div>
+</body>
+</html>
