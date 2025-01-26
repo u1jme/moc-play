@@ -3,43 +3,73 @@
 <head>
   <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
   <title>James MOC</title>
-  <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="bootstrap.rtl.min.css">
+  <link rel="stylesheet" type="text/css" href="bootstrap-4.6.2-dist/css/bootstrap.min.css">
   <script>
-    function fileDiv(filename, id) {
-      var outerDiv, fileDiv;
-
-      fileDiv = document.createElement('button');
-      fileDiv.id = id;
-      fileDiv.textContent = filename;
-      fileDiv.className = 'btn btn-info btn-md';
-
-      outerDiv = document.createElement('div');
-      outerDiv.id = id;
-      outerDiv.className = 'col-sm-12 col-12'; 
-
-      outerDiv.appendChild(fileDiv);
-      return outerDiv;
+    function mocElement(elementType, textstr, classValue) {
+      var rtn = document.createElement(elementType);
+      rtn.textContent = textstr;
+      if (classValue) {
+        rtn.className = classValue;
+      }
+      return rtn;
     }
+
+    function fileDiv(filename, id) {
+      var filename_tr, btn_td, buttonDiv, fn_td, filenameDiv;
+
+      btn_td = document.createElement('td');
+      btn_td.id = id;
+      btn_td.className = 'col-1';
+      buttonDiv = mocElement('button', 'P', 'btn btn-info btn-md');
+      buttonDiv.id = id;
+      btn_td.appendChild(buttonDiv);
+
+      filenameDiv = document.createElement('span');
+      filenameDiv.textContent = filename;
+      fn_td = document.createElement('td');
+      fn_td.className = 'col-4';
+      fn_td.textContent = filename;
+
+      filename_tr = document.createElement('tr');
+      filename_tr.appendChild(fn_td);
+      filename_tr.appendChild(btn_td);
+      return filename_tr;
+    }
+
+
     function reqListener() {
-      var musicFiles, musicFile, musicFileNorm, idx, musicDiv;
+      var musicFiles, musicFile, musicFileNorm, idx, musicDiv, music_table, music_thead, music_td;
       musicFiles = JSON.parse(this.responseText);
       if (!musicFiles || musicFiles == '') {
         console.log("No response text");
         return;
       }
       console.log(JSON.stringify(musicFiles));
+
+      music_table = document.createElement('table');
+      music_table.className = 'table';
+      music_thead = document.createElement('thead');
+      music_thead.className = 'thead-dark';
+      music_td = document.createElement('tr');
+      music_td.appendChild(mocElement('th', 'File', 'col-4'));
+      music_td.appendChild(mocElement('th', 'Enter', 'col-1'));
+      music_thead.appendChild(music_td);
+      music_table.appendChild(music_thead);
+
+      idx = 1;
+      for (idx = 0; idx < musicFiles.length; idx++) {
+         musicFileNorm = musicFiles[idx].replace('/', '');
+         music_table.appendChild(fileDiv(musicFileNorm, 'file_' + (1+idx)));
+      }
+
       musicDiv = document.getElementById('music');
       if (!musicDiv) {
         console.log("Cannot find 'music' div");
         return;
       }
-      idx = 1;
-      for (idx = 0; idx < musicFiles.length; idx++) {
-         musicFileNorm = musicFiles[idx].replace('/', '');
-         musicDiv.appendChild(fileDiv(musicFileNorm, 'file_' + (1+idx)));
-      }
+      musicDiv.appendChild(music_table);
     }
+
     function doPlay() {
       const req = new XMLHttpRequest();
       req.addEventListener("load", reqListener);
@@ -58,30 +88,59 @@
       req.open("GET", "/moclist");
       req.send();
     }
+    function doEnter() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/moclist");
+      req.send();
+    }
   </script>
 </head>
 <body>
    <div class="container">
       <div class="row">
-         <div class="col-sm-12 col-12">
+         <div class="col-xs-12 col-12">
             <h1> </h1>
          </div>
       </div>
       <div class="row">
-         <div class="col-sm-12 col-12">
+         <div class="col-12">
             <h1>MOC Ubuntu-23</h1>
          </div>
       </div>
       <div class="row">
-         <div class="col-sm-3 col-3">
+         <div class="col-3">
             <button onclick="doPlay()" class="btn btn-info btn-lg">Play</button>
          </div>
-         <div class="col-sm-3 col-3">
+         <div class="col-3">
             <button onclick="doStop()" class="btn btn-danger btn-lg">Stop</button>
          </div>
-         <div class="col-sm-3 col-3">
-            <button onclick="doList()" class="btn btn-danger btn-lg">List</button>
+         <div class="col-2">
+            <button onclick="doBack()" class="btn btn-info btn-lg">&lt;&lt;</button>
          </div>
+         <div class="col-2">
+            <button onclick="doForward()" class="btn btn-info btn-lg">&gt;&gt;</button>
+         </div>
+      </div>
+      <div class="row">
+       <p>
+      </div>
+      <div class="row">
+         <div class="col-3">
+            <button onclick="doUp()" class="btn btn-info btn-lg">Up</button>
+         </div>
+         <div class="col-3">
+            <button onclick="doEnter()" class="btn btn-success btn-lg">Enter</button>
+         </div>
+         <div class="col-2">
+            <button onclick="doVolDown()" class="btn btn-info btn-lg">Q</button>
+         </div>
+         <div class="col-2">
+            <button onclick="doVolUp()" class="btn btn-info btn-lg">L</button>
+         </div>
+      </div>
+      <div class="row">
+       <p>
       </div>
       <div id="music">
       </div>

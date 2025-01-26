@@ -8,7 +8,7 @@ const port = process.env.PORT || 8080;
 // get an instance of router
 const router = express.Router();
 
-const init_music_dir = process.env.MOC_INIT_DIR || '/home/ubuntu';
+const init_music_dir = process.env.MOC_INIT_DIR || '/home/jmemoc/Music/all';
 var current_music_dir = init_music_dir;
 
 function build_find_cmd(dir, is_directory) {
@@ -61,7 +61,7 @@ router.get('/mocstop', function(req, res) {
 router.get('/moclist', function(req, res) {
   var find_cmd = build_find_cmd(current_music_dir, true);
   var files = [];
-  exec('find /home/ubuntu -maxdepth 1 -type f -printf \'%f\n\'', (error, stdout, stderr) => {
+  exec(find_cmd, (error, stdout, stderr) => {
     if (error) {
         console.log(`error: ${error.message}`);
         return;
@@ -99,4 +99,4 @@ app.use('/', router);
 app.use(express.static(__dirname + '/public'));
 
 app.listen(port);
-console.log('Server started at http://ubuntu-23:' + port);
+console.log('Server started at http://mocdal:' + port);
