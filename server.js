@@ -9,18 +9,44 @@ const port = process.env.PORT || 8080;
 const router = express.Router();
 
 const init_music_dir = process.env.MOC_INIT_DIR || '/home/jmemoc/Music/all';
+
 var current_music_dir = init_music_dir;
+var current_music_dict = {};
 
 function build_find_cmd(dir, is_directory) {
-  var cmd, type;
+  let cmd, type;
   type = (is_directory) ? '-type d' : '-type f';
   cmd = 'find ' + dir + ' -maxdepth 1 ' + type + ' -printf \'%f\n\'';
   return cmd;
 }
 
 function find_entries(stdout) {
-    var stdout_find_array = stdout.split(/\r?\n|\r|\n/g);
-    return JSON.stringify(stdout_find_array);
+    let stdout_find_array = stdout.split(/\r?\n|\r|\n/g);
+    build_music_dict(stdout_find_array);
+    let folder_arr = [];
+    for (const [key, value] of Object.entries(current_music_dict)) {
+       let folder = { 'name': value, 'id': key };
+       folder_arr.push(folder);
+    }
+    return JSON.stringify(folder_arr);
+}
+
+function normalize_name(name) {
+  let rtn = name.trim();
+  rtn = rtn.replace('?', '.');
+  rtn = rtn.replace('/', '');
+  return rtn;
+}
+
+function build_music_dict(folder_arr) {
+  let idx;
+  current_music_dict = {};
+  for (idx = 0; idx < folder_arr.length; idx++) {
+     let normalized = normalize_name(folder_arr[idx]);
+     if (normalized && normalized.length > 0) {
+       current_music_dict["folder_" + idx] = normalized;
+     }
+  }
 }
 
 // main index page
@@ -87,6 +113,11 @@ router.get('/mocdirs', function(req, res) {
     }
     res.send(find_entries(stdout));
   });
+});
+
+router.get('/mocplayfolder', function(req, res) {
+  let id = req.query.folder_id;
+  console.log(current_music_dict[id]);
 });
 
 router.post('/mocfolder', function(req, res) {

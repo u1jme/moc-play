@@ -22,6 +22,9 @@
       btn_td.className = 'col-1';
       buttonDiv = mocElement('button', 'P', 'btn btn-info btn-md');
       buttonDiv.id = id;
+      buttonDiv.onclick = function() {
+        doPlayFolder(id);
+      };
       btn_td.appendChild(buttonDiv);
 
       filenameDiv = document.createElement('span');
@@ -35,7 +38,6 @@
       filename_tr.appendChild(btn_td);
       return filename_tr;
     }
-
 
     function reqListener() {
       var musicFiles, musicFile, musicFileNorm, idx, musicDiv, music_table, music_thead, music_td;
@@ -58,8 +60,7 @@
 
       idx = 1;
       for (idx = 0; idx < musicFiles.length; idx++) {
-         musicFileNorm = musicFiles[idx].replace('/', '');
-         music_table.appendChild(fileDiv(musicFileNorm, 'file_' + (1+idx)));
+         music_table.appendChild(fileDiv(musicFiles[idx].name, musicFiles[idx].id));
       }
 
       musicDiv = document.getElementById('music');
@@ -92,6 +93,18 @@
       const req = new XMLHttpRequest();
       req.addEventListener("load", reqListener);
       req.open("GET", "/moclist");
+      req.send();
+    }
+    function doPlayFolder(folder_id) {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/mocplayfolder?folder_id=" + folder_id);
+      req.send();
+    }
+    function doMoveUp() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/mocmoveup");
       req.send();
     }
   </script>
