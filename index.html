@@ -64,11 +64,18 @@
       }
 
       musicDiv = document.getElementById('music');
-      if (!musicDiv) {
-        console.log("Cannot find 'music' div");
+      if (musicDiv) {
+        musicDiv.parentNode.removeChild(musicDiv);
+      }
+      musicDiv = document.createElement('div');
+      musicDiv.id = 'music';
+      musicDiv.appendChild(music_table);
+      container = document.getElementById('container');
+      if (!container) {
+        console.log('Cannot find element with id container');
         return;
       }
-      musicDiv.appendChild(music_table);
+      container.appendChild(musicDiv);
     }
 
     function doPlay() {
@@ -110,7 +117,7 @@
   </script>
 </head>
 <body>
-   <div class="container">
+   <div class="container" id="container">
       <div class="row">
          <div class="col-xs-12 col-12">
             <h1> </h1>
@@ -154,8 +161,6 @@
       </div>
       <div class="row">
        <p>
-      </div>
-      <div id="music">
       </div>
    </div>
 </body>

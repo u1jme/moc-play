@@ -1,3 +1,4 @@
+
 const express = require('express');
 const path = require('path');
 const { exec } = require('node:child_process');
@@ -13,10 +14,9 @@ const init_music_dir = process.env.MOC_INIT_DIR || '/home/jmemoc/Music/all';
 var current_music_dir = init_music_dir;
 var current_music_dict = {};
 
-function build_find_cmd(dir, is_directory) {
-  let cmd, type;
-  type = (is_directory) ? '-type d' : '-type f';
-  cmd = 'find ' + dir + ' -maxdepth 1 ' + type + ' -printf \'%f\n\'';
+function build_find_cmd(dir) {
+  let cmd;
+  cmd = 'find "' + dir + '" -maxdepth 1 -printf \'%f\n\'';
   return cmd;
 }
 
@@ -47,6 +47,21 @@ function build_music_dict(folder_arr) {
        current_music_dict["folder_" + idx] = normalized;
      }
   }
+}
+
+function send_current_dir_contents(res) {
+  var find_cmd = build_find_cmd(current_music_dir);
+  exec(find_cmd, (error, stdout, stderr) => {
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+    res.send(find_entries(stdout));
+  });
 }
 
 // main index page
@@ -85,7 +100,7 @@ router.get('/mocstop', function(req, res) {
 });
 
 router.get('/moclist', function(req, res) {
-  var find_cmd = build_find_cmd(current_music_dir, true);
+  var find_cmd = build_find_cmd(current_music_dir);
   var files = [];
   exec(find_cmd, (error, stdout, stderr) => {
     if (error) {
@@ -101,23 +116,15 @@ router.get('/moclist', function(req, res) {
 });
 
 router.get('/mocdirs', function(req, res) {
-  var find_cmd = build_find_cmd(current_music_dir, true);
-  exec(find_cmd, (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-    res.send(find_entries(stdout));
-  });
+  send_current_dir_contents(res);
 });
 
 router.get('/mocplayfolder', function(req, res) {
   let id = req.query.folder_id;
-  console.log(current_music_dict[id]);
+  current_music_dir += "/";
+  current_music_dir += current_music_dict[id];
+  console.log(current_music_dir);
+  send_current_dir_contents(res);
 });
 
 router.post('/mocfolder', function(req, res) {
