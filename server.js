@@ -14,21 +14,36 @@ const init_music_dir = process.env.MOC_INIT_DIR || '/home/jmemoc/Music/all';
 var current_music_dir = init_music_dir;
 var current_music_dict = {};
 
-function build_find_cmd(dir) {
-  let cmd;
-  cmd = 'find "' + dir + '" -maxdepth 1 -printf \'%f\n\'';
+function build_find_cmd(dir, is_for_dirs) {
+  let cmd, type = (is_for_dirs) ? '-type d' : '-type f';
+  cmd = 'find "' + dir + '" -maxdepth 1 ' + type + ' -printf \'%f\n\'';
   return cmd;
 }
 
-function find_entries(stdout) {
-    let stdout_find_array = stdout.split(/\r?\n|\r|\n/g);
-    build_music_dict(stdout_find_array);
-    let folder_arr = [];
-    for (const [key, value] of Object.entries(current_music_dict)) {
-       let folder = { 'name': value, 'id': key };
-       folder_arr.push(folder);
-    }
-    return JSON.stringify(folder_arr);
+function build_payload(stdout_dirs, stdout_files) {
+  let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {};
+
+  current_music_dict = {};
+
+  stdout_dirs_array = stdout_dirs.split(/\r?\n|\r|\n/g);
+  append_music_dict(stdout_dirs_array, 1);
+  stdout_files_array = stdout_files.split(/\r?\n|\r|\n/g);
+  append_music_dict(stdout_files_array, 0);
+
+  for (const [key, value] of Object.entries(current_music_dict)) {
+    folder_arr.push(value);
+  }
+  payload = { 'music_dirs' : folder_arr, 'current_dir' : current_music_dir };
+  return JSON.stringify(payload);
+}
+
+function jsonize_music_dict() {
+  let folder_arr = [];
+  for (const [key, value] of Object.entries(current_music_dict)) {
+    let folder = { 'name': value, 'id': key, 'is_dir': (is_for_dirs ? 'true' : 'false') };
+    folder_arr.push(folder);
+  }
+  return JSON.stringify(folder_arr);
 }
 
 function normalize_name(name) {
@@ -38,20 +53,21 @@ function normalize_name(name) {
   return rtn;
 }
 
-function build_music_dict(folder_arr) {
-  let idx;
-  current_music_dict = {};
+function append_music_dict(folder_arr, is_for_dir) {
+  let idx, dict_entry;
   for (idx = 0; idx < folder_arr.length; idx++) {
      let normalized = normalize_name(folder_arr[idx]);
      if (normalized && normalized.length > 0) {
-       current_music_dict["folder_" + idx] = normalized;
+       dict_entry = { name : normalized, id : "entry_" + idx, is_dir : ((is_for_dir == 1) ? "true" : "false") };
+       current_music_dict[dict_entry.id] = dict_entry;
      }
   }
 }
 
 function send_current_dir_contents(res) {
-  var find_cmd = build_find_cmd(current_music_dir);
-  exec(find_cmd, (error, stdout, stderr) => {
+  var find_cmd;
+  find_cmd = build_find_cmd(current_music_dir, true);
+  exec(find_cmd, (error, stdout_dirs, stderr) => {
     if (error) {
         console.log(`error: ${error.message}`);
         return;
@@ -60,7 +76,18 @@ function send_current_dir_contents(res) {
         console.log(`stderr: ${stderr}`);
         return;
     }
-    res.send(find_entries(stdout));
+    find_cmd = build_find_cmd(current_music_dir, false);
+    exec(find_cmd, (error, stdout_files, stderr) => {
+      if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+      }
+      if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+      }
+      res.send(build_payload(stdout_dirs, stdout_files));
+    });
   });
 }
 
@@ -99,20 +126,8 @@ router.get('/mocstop', function(req, res) {
   res.send('stop');
 });
 
-router.get('/moclist', function(req, res) {
-  var find_cmd = build_find_cmd(current_music_dir);
-  var files = [];
-  exec(find_cmd, (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-    res.send(find_entries(stdout));
-  });
+router.get('/mocinit', function(req, res) {
+  send_current_dir_contents(res);
 });
 
 router.get('/mocdirs', function(req, res) {
@@ -120,10 +135,27 @@ router.get('/mocdirs', function(req, res) {
 });
 
 router.get('/mocplayfolder', function(req, res) {
-  let id = req.query.folder_id;
+  let id = req.query.folder_id, dir_entry;
+  dir_entry = current_music_dict[id];
+  if (!dir_entry) {
+    console.log("Cannot find entry with id " + id);
+    return;
+  }
   current_music_dir += "/";
-  current_music_dir += current_music_dict[id];
-  console.log(current_music_dir);
+  current_music_dir += dir_entry.name;
+  send_current_dir_contents(res);
+});
+
+router.get('/mocmoveup', function(req, res) {
+  let last = current_music_dir.lastIndexOf("/");
+  if (last == -1) {
+    console.log("Cannot find last slash " + current_music_dir);
+    return;
+  }
+  // Check if not reached the top level init directory.
+  if (current_music_dir != init_music_dir) {
+    current_music_dir = current_music_dir.slice(0, last);
+  }
   send_current_dir_contents(res);
 });
 

@@ -14,24 +14,21 @@
       return rtn;
     }
 
-    function fileDiv(filename, id) {
-      var filename_tr, btn_td, buttonDiv, fn_td, filenameDiv;
+    function fileDiv(file_entry) {
+      var filename_tr, btn_td, buttonDiv, fn_td;
 
       btn_td = document.createElement('td');
-      btn_td.id = id;
       btn_td.className = 'col-1';
-      buttonDiv = mocElement('button', 'P', 'btn btn-info btn-md');
-      buttonDiv.id = id;
-      buttonDiv.onclick = function() {
-        doPlayFolder(id);
-      };
-      btn_td.appendChild(buttonDiv);
+      if (file_entry.is_dir == "true") {
+        buttonDiv = mocElement('button', 'P', 'btn btn-info btn-md');
+        buttonDiv.id = file_entry.id;
+        buttonDiv.onclick = function() {
+          doPlayFolder(file_entry.id);
+        };
+        btn_td.appendChild(buttonDiv);
+      }
 
-      filenameDiv = document.createElement('span');
-      filenameDiv.textContent = filename;
-      fn_td = document.createElement('td');
-      fn_td.className = 'col-4';
-      fn_td.textContent = filename;
+      fn_td = mocElement('td', file_entry.name, 'col-4');
 
       filename_tr = document.createElement('tr');
       filename_tr.appendChild(fn_td);
@@ -40,13 +37,14 @@
     }
 
     function reqListener() {
-      var musicFiles, musicFile, musicFileNorm, idx, musicDiv, music_table, music_thead, music_td;
-      musicFiles = JSON.parse(this.responseText);
-      if (!musicFiles || musicFiles == '') {
-        console.log("No response text");
+      var payload, musicFile, musicFileNorm, idx, musicDiv,
+        music_table, music_thead, music_td;
+      payload = JSON.parse(this.responseText);
+      if (!payload) {
+        console.log("No response payload");
         return;
       }
-      console.log(JSON.stringify(musicFiles));
+      console.log(JSON.stringify(payload.music_dirs));
 
       music_table = document.createElement('table');
       music_table.className = 'table';
@@ -59,8 +57,8 @@
       music_table.appendChild(music_thead);
 
       idx = 1;
-      for (idx = 0; idx < musicFiles.length; idx++) {
-         music_table.appendChild(fileDiv(musicFiles[idx].name, musicFiles[idx].id));
+      for (idx = 0; idx < payload.music_dirs.length; idx++) {
+         music_table.appendChild(fileDiv(payload.music_dirs[idx]));
       }
 
       musicDiv = document.getElementById('music');
@@ -76,6 +74,12 @@
         return;
       }
       container.appendChild(musicDiv);
+      
+      if (!document.getElementById('current_dir')) {
+        console.log('Cannot find element with id current_dir');
+        return;
+      }
+      document.getElementById('current_dir').textContent = payload.current_dir;
     }
 
     function doPlay() {
@@ -96,10 +100,10 @@
       req.open("GET", "/moclist");
       req.send();
     }
-    function doEnter() {
+    function doInit() {
       const req = new XMLHttpRequest();
       req.addEventListener("load", reqListener);
-      req.open("GET", "/moclist");
+      req.open("GET", "/mocinit");
       req.send();
     }
     function doPlayFolder(folder_id) {
@@ -147,10 +151,9 @@
       </div>
       <div class="row">
          <div class="col-3">
-            <button onclick="doUp()" class="btn btn-info btn-lg">Up</button>
+            <button onclick="doMoveUp()" class="btn btn-info btn-lg">Up</button>
          </div>
          <div class="col-3">
-            <button onclick="doEnter()" class="btn btn-success btn-lg">Enter</button>
          </div>
          <div class="col-2">
             <button onclick="doVolDown()" class="btn btn-info btn-lg">Q</button>
@@ -161,6 +164,16 @@
       </div>
       <div class="row">
        <p>
+      </div>
+      <div class="row">
+         <div class="col-12">
+            <h4>Current dir: <span id="current_dir">----</span></h4>
+         </div>
+      </div>
+      <div id="music">
+         <div class="col-3">
+            <button onclick="doInit()" class="btn btn-success btn-lg">Initialize...</button>
+         </div>
       </div>
    </div>
 </body>
