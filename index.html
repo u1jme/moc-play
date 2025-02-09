@@ -94,12 +94,6 @@
       req.open("GET", "/mocstop");
       req.send();
     }
-    function doList() {
-      const req = new XMLHttpRequest();
-      req.addEventListener("load", reqListener);
-      req.open("GET", "/moclist");
-      req.send();
-    }
     function doInit() {
       const req = new XMLHttpRequest();
       req.addEventListener("load", reqListener);
@@ -118,6 +112,12 @@
       req.open("GET", "/mocmoveup");
       req.send();
     }
+    function doSetPlayList() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/mocsetplaylist");
+      req.send();
+    }
   </script>
 </head>
 <body>
@@ -134,16 +134,16 @@
       </div>
       <div class="row">
          <div class="col-3">
-            <button onclick="doPlay()" class="btn btn-info btn-lg">Play</button>
+            <button onclick="doPlay()" class="btn btn-primary btn-lg">Play</button>
          </div>
          <div class="col-3">
             <button onclick="doStop()" class="btn btn-danger btn-lg">Stop</button>
          </div>
          <div class="col-2">
-            <button onclick="doBack()" class="btn btn-info btn-lg">&lt;&lt;</button>
+            <button onclick="doBack()" class="btn btn-secondary btn-lg">&lt;&lt;</button>
          </div>
          <div class="col-2">
-            <button onclick="doForward()" class="btn btn-info btn-lg">&gt;&gt;</button>
+            <button onclick="doForward()" class="btn btn-secondary btn-lg">&gt;&gt;</button>
          </div>
       </div>
       <div class="row">
@@ -151,9 +151,10 @@
       </div>
       <div class="row">
          <div class="col-3">
-            <button onclick="doMoveUp()" class="btn btn-info btn-lg">Up</button>
+            <button onclick="doMoveUp()" class="btn btn-secondary btn-lg">Up</button>
          </div>
          <div class="col-3">
+            <button onclick="doSetPlayList()" class="btn btn-success btn-lg">Add</button>
          </div>
          <div class="col-2">
             <button onclick="doVolDown()" class="btn btn-info btn-lg">Q</button>

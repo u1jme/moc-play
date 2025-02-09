@@ -46,6 +46,21 @@ function jsonize_music_dict() {
   return JSON.stringify(folder_arr);
 }
 
+function add_current_dir_playlist() {
+  let mocp_cmd;
+  mocp_cmd = 'mocp --clear && mocp --append "' + current_music_dir + '" && mocp --play';
+  exec(mocp_cmd, (error, stdout, stderr) => {
+    if (error) {
+        console.log(`error: ${error.message}`);
+        return;
+    }
+    if (stderr) {
+        console.log(`stderr: ${stderr}`);
+        return;
+    }
+  });
+}
+
 function normalize_name(name) {
   let rtn = name.trim();
   rtn = rtn.replace('?', '.');
@@ -159,8 +174,11 @@ router.get('/mocmoveup', function(req, res) {
   send_current_dir_contents(res);
 });
 
-router.post('/mocfolder', function(req, res) {
-   console.log(req.body);
+router.get('/mocsetplaylist', function(req, res) {
+  // Check if not reached the top level init directory.
+  if (current_music_dir != init_music_dir) {
+    add_current_dir_playlist();
+  }
 });
 
 // apply the routes to our application
