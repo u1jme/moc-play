@@ -18,12 +18,6 @@ var current_music_dict = {};
 
 var find_stdout = '';
 
-function build_find_cmd(dir, is_for_dirs) {
-  let cmd, type = (is_for_dirs) ? '-type d' : '-type f';
-  cmd = 'find "' + dir + '" -maxdepth 1 ' + type + ' -printf \'%f\n\'';
-  return cmd;
-}
-
 function build_payload(stdout_dirs, stdout_files) {
   let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {};
 
@@ -50,11 +44,11 @@ function jsonize_music_dict() {
   return JSON.stringify(folder_arr);
 }
 
-function add_current_dir_playlist() {
+function run_moc_cmd(script, script_args) {
   let mocp_cmd, spawn_proc;
-  mocp_cmd = init_scripts_dir + '/moc_append_play.sh';
+  mocp_cmd = init_scripts_dir + script;
 
-  spawn_proc = spawn(mocp_cmd, [ current_music_dir ]);
+  spawn_proc = spawn(mocp_cmd, script_args);
   return new Promise((resolveFunc) => {
     spawn_proc.stdout.on("data", (x) => {
       process.stdout.write(x.toString());
@@ -66,6 +60,10 @@ function add_current_dir_playlist() {
       resolveFunc(code);
     });
   });
+}
+
+async function async_run_moc_cmd(script, script_args) {
+  await run_moc_cmd(script, script_args);
 }
 
 function normalize_name(name) {
@@ -122,32 +120,12 @@ app.get('/', function(req, res) {
 });
 
 router.get('/mocplay', function(req, res) {
-  exec('mocp --unpause', (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-    console.log(`stdout: ${stdout}`);
-  });
+  async_run_moc_cmd('/moc_cmd.sh', [ '--unpause' ]);
   res.send('play');
 });
 
 router.get('/mocstop', function(req, res) {
-  exec('mocp --pause', (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-    console.log(`stdout: ${stdout}`);
-  });
+  async_run_moc_cmd('/moc_cmd.sh', [ '--pause' ]);
   res.send('stop');
 });
 
@@ -187,7 +165,7 @@ router.get('/mocmoveup', function(req, res) {
 router.get('/mocsetplaylist', function(req, res) {
   // Check if not reached the top level init directory.
   if (current_music_dir != init_music_dir) {
-    add_current_dir_playlist();
+    async_run_moc_cmd('/moc_append_play.sh', [ current_music_dir ]);
   }
 });
 
