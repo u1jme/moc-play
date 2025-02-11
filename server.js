@@ -1,7 +1,8 @@
 
 const express = require('express');
 const path = require('path');
-const { exec } = require('node:child_process');
+const { spawn } = require('node:child_process');
+//const { exec } = require('node:child_process');
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -10,9 +11,12 @@ const port = process.env.PORT || 8080;
 const router = express.Router();
 
 const init_music_dir = process.env.MOC_INIT_DIR || '/home/jmemoc/Music/all';
+const init_scripts_dir = process.env.MOC_SCRIPTS_DIR || '/home/jmemoc/programming/moc-play/scripts'
 
 var current_music_dir = init_music_dir;
 var current_music_dict = {};
+
+var find_stdout = '';
 
 function build_find_cmd(dir, is_for_dirs) {
   let cmd, type = (is_for_dirs) ? '-type d' : '-type f';
@@ -47,17 +51,20 @@ function jsonize_music_dict() {
 }
 
 function add_current_dir_playlist() {
-  let mocp_cmd;
-  mocp_cmd = 'mocp --clear && mocp --append "' + current_music_dir + '" && mocp --play';
-  exec(mocp_cmd, (error, stdout, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
+  let mocp_cmd, spawn_proc;
+  mocp_cmd = init_scripts_dir + '/moc_append_play.sh';
+
+  spawn_proc = spawn(mocp_cmd, [ current_music_dir ]);
+  return new Promise((resolveFunc) => {
+    spawn_proc.stdout.on("data", (x) => {
+      process.stdout.write(x.toString());
+    });
+    spawn_proc.stderr.on("data", (x) => {
+      process.stderr.write(x.toString());
+    });
+    spawn_proc.on("exit", (code) => {
+      resolveFunc(code);
+    });
   });
 }
 
@@ -79,31 +86,34 @@ function append_music_dict(folder_arr, is_for_dir) {
   }
 }
 
-function send_current_dir_contents(res) {
-  var find_cmd;
-  find_cmd = build_find_cmd(current_music_dir, true);
-  exec(find_cmd, (error, stdout_dirs, stderr) => {
-    if (error) {
-        console.log(`error: ${error.message}`);
-        return;
-    }
-    if (stderr) {
-        console.log(`stderr: ${stderr}`);
-        return;
-    }
-    find_cmd = build_find_cmd(current_music_dir, false);
-    exec(find_cmd, (error, stdout_files, stderr) => {
-      if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-      }
-      if (stderr) {
-          console.log(`stderr: ${stderr}`);
-          return;
-      }
-      res.send(build_payload(stdout_dirs, stdout_files));
+function do_find_cmd(is_for_dirs) {
+  var find_cmd, spawn_proc, is_for_var = is_for_dirs ? 'is_dirs' : 'is_files';
+  find_cmd = init_scripts_dir + '/find_cmd.sh';
+
+  find_stdout = '';
+  spawn_proc = spawn(find_cmd, [ current_music_dir, is_for_var ]);
+  return new Promise((resolveFunc) => {
+    spawn_proc.stdout.on("data", (x) => {
+      find_stdout = x.toString();
+      // process.stdout.write(x.toString());
+    });
+    spawn_proc.stderr.on("data", (x) => {
+      find_stdout = '';
+      process.stderr.write(x.toString());
+    });
+    spawn_proc.on("exit", (code) => {
+      resolveFunc(code);
     });
   });
+}
+
+async function send_current_dir_contents(res) {
+  let find_dirs_stdout, find_files_stdout;
+  await do_find_cmd(true);
+  find_dirs_stdout = find_stdout;
+  await do_find_cmd(false);
+  find_files_stdout = find_stdout;
+  res.send(build_payload(find_dirs_stdout, find_files_stdout));
 }
 
 // main index page
