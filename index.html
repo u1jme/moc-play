@@ -4,6 +4,7 @@
   <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1">
   <title>James MOC</title>
   <link rel="stylesheet" type="text/css" href="bootstrap-4.6.2-dist/css/bootstrap.min.css">
+  <script src="jquery-3.7.1.min.js"></script>
   <script>
     function mocElement(elementType, textstr, classValue) {
       var rtn = document.createElement(elementType);
@@ -113,10 +114,19 @@
       req.send();
     }
     function doSetPlayList() {
-      const req = new XMLHttpRequest();
-      req.addEventListener("load", reqListener);
-      req.open("GET", "/mocsetplaylist");
-      req.send();
+      $.ajax({
+        url: "/mocsetplaylist",
+        type: "GET",
+        beforeSend: function(jqxhr, settings) {
+          document.getElementById('wait_resp').textContent = 'O';
+        },
+        error: function(jqxhr, settings, error) {
+          document.getElementById('wait_resp').textContent = 'X';
+        },
+        success: function(res) {
+          document.getElementById('wait_resp').textContent = ' ';
+        }
+      });
     }
   </script>
 </head>
@@ -161,6 +171,9 @@
          </div>
          <div class="col-2">
             <button onclick="doVolUp()" class="btn btn-info btn-lg">L</button>
+         </div>
+         <div class="col-2">
+            <h4><span id="wait_resp">-</span></h4>
          </div>
       </div>
       <div class="row">
