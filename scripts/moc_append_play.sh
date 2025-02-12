@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 set -u
+#set -x
 if test -z "$1"
 then
   exit 2
