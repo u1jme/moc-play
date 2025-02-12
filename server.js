@@ -46,6 +46,7 @@ function jsonize_music_dict() {
 
 function run_moc_cmd(script, script_args) {
   let mocp_cmd, spawn_proc;
+  console.log('running cmd ' + script);
   mocp_cmd = init_scripts_dir + script;
 
   spawn_proc = spawn(mocp_cmd, script_args);
@@ -121,12 +122,12 @@ app.get('/', function(req, res) {
 
 router.get('/mocplay', function(req, res) {
   async_run_moc_cmd('/moc_cmd.sh', [ '--unpause' ]);
-  res.send('play');
+  res.send(JSON.stringify({ success : true });
 });
 
 router.get('/mocstop', function(req, res) {
   async_run_moc_cmd('/moc_cmd.sh', [ '--pause' ]);
-  res.send('stop');
+  res.send(JSON.stringify({ success : true });
 });
 
 router.get('/mocinit', function(req, res) {
@@ -167,6 +168,7 @@ router.get('/mocsetplaylist', function(req, res) {
   if (current_music_dir != init_music_dir) {
     async_run_moc_cmd('/moc_append_play.sh', [ current_music_dir ]);
   }
+  res.send(JSON.stringify({ success : true });
 });
 
 // apply the routes to our application
