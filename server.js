@@ -122,12 +122,12 @@ app.get('/', function(req, res) {
 
 router.get('/mocplay', function(req, res) {
   async_run_moc_cmd('/moc_cmd.sh', [ '--unpause' ]);
-  res.send(JSON.stringify({ success : true });
+  res.send(JSON.stringify({ success : true }));
 });
 
 router.get('/mocstop', function(req, res) {
   async_run_moc_cmd('/moc_cmd.sh', [ '--pause' ]);
-  res.send(JSON.stringify({ success : true });
+  res.send(JSON.stringify({ success : true }));
 });
 
 router.get('/mocinit', function(req, res) {
@@ -168,7 +168,7 @@ router.get('/mocsetplaylist', function(req, res) {
   if (current_music_dir != init_music_dir) {
     async_run_moc_cmd('/moc_append_play.sh', [ current_music_dir ]);
   }
-  res.send(JSON.stringify({ success : true });
+  res.send(JSON.stringify({ success : true }));
 });
 
 // apply the routes to our application
