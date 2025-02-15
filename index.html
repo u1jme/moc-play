@@ -37,10 +37,10 @@
       return filename_tr;
     }
 
-    function reqListener() {
+    function handle_response(responseText) {
       var payload, musicFile, musicFileNorm, idx, musicDiv,
         music_table, music_thead, music_td;
-      payload = JSON.parse(this.responseText);
+      payload = JSON.parse(responseText);
       if (!payload) {
         console.log("No response payload");
         return;
@@ -83,16 +83,38 @@
       document.getElementById('current_dir').textContent = payload.current_dir;
     }
 
+    function reqListener() {
+      handle_response(this.responseText);
+    }
+
     function doPlay() {
       const req = new XMLHttpRequest();
-      req.addEventListener("load", reqListener);
       req.open("GET", "/mocplay");
       req.send();
     }
     function doStop() {
       const req = new XMLHttpRequest();
-      req.addEventListener("load", reqListener);
       req.open("GET", "/mocstop");
+      req.send();
+    }
+    function doNext() {
+      const req = new XMLHttpRequest();
+      req.open("GET", "/mocnext");
+      req.send();
+    }
+    function doPrev() {
+      const req = new XMLHttpRequest();
+      req.open("GET", "/mocprev");
+      req.send();
+    }
+    function doVolUp() {
+      const req = new XMLHttpRequest();
+      req.open("GET", "/mocvolup");
+      req.send();
+    }
+    function doVolDown() {
+      const req = new XMLHttpRequest();
+      req.open("GET", "/mocvoldown");
       req.send();
     }
     function doInit() {
@@ -108,10 +130,20 @@
       req.send();
     }
     function doMoveUp() {
-      const req = new XMLHttpRequest();
-      req.addEventListener("load", reqListener);
-      req.open("GET", "/mocmoveup");
-      req.send();
+      $.ajax({
+        url: "/mocmoveup",
+        type: "GET",
+        beforeSend: function(jqxhr, settings) {
+          document.getElementById('wait_resp').textContent = 'O';
+        },
+        error: function(jqxhr, settings, error) {
+          document.getElementById('wait_resp').textContent = 'X';
+        },
+        success: function(res) {
+          document.getElementById('wait_resp').textContent = ' ';
+          handle_response(res);
+        }
+      });
     }
     function doSetPlayList() {
       $.ajax({
@@ -139,41 +171,42 @@
       </div>
       <div class="row">
          <div class="col-12">
-            <h1>MOC Ubuntu-23</h1>
+            <h1>MOC Ubuntu-23 <span id="wait_resp"> </span></h1>
          </div>
       </div>
       <div class="row">
-         <div class="col-3">
-            <button onclick="doPlay()" class="btn btn-primary btn-lg">Play</button>
-         </div>
-         <div class="col-3">
-            <button onclick="doStop()" class="btn btn-danger btn-lg">Stop</button>
+         <div class="col-2">
+            <button onclick="doPlay()" class="btn btn-primary"><img src='play.svg'</img>
+</button>
          </div>
          <div class="col-2">
-            <button onclick="doBack()" class="btn btn-secondary btn-lg">&lt;&lt;</button>
+            <button onclick="doStop()" class="btn btn-danger"><img src='pause.svg' alt="Stop"</img></button>
          </div>
          <div class="col-2">
-            <button onclick="doForward()" class="btn btn-secondary btn-lg">&gt;&gt;</button>
+            <button onclick="doPrev()" class="btn btn-secondary"><img src='rewind.svg' alt="&lt;&lt;"</img></button>
+         </div>
+         <div class="col-2">
+            <button onclick="doNext()" class="btn btn-secondary"><img src='fastforward.svg' alt="&gt;&gt;"</img></button>
          </div>
       </div>
       <div class="row">
        <p>
       </div>
       <div class="row">
-         <div class="col-3">
-            <button onclick="doMoveUp()" class="btn btn-secondary btn-lg">Up</button>
-         </div>
-         <div class="col-3">
-            <button onclick="doSetPlayList()" class="btn btn-success btn-lg">Add</button>
+         <div class="col-2">
+            <button onclick="doMoveUp()" class="btn btn-secondary"><img src='up.svg' alt="Up"</img></button>
          </div>
          <div class="col-2">
-            <button onclick="doVolDown()" class="btn btn-info btn-lg">Q</button>
+            <button onclick="doSetPlayList()" class="btn btn-success"><img src='folderplus.svg' alt="FolderPlus"</img></button>
          </div>
          <div class="col-2">
-            <button onclick="doVolUp()" class="btn btn-info btn-lg">L</button>
+            <button onclick="doVolDown()" class="btn btn-info"><img src='voldown.svg' alt="VolDown"</img></button>
          </div>
          <div class="col-2">
-            <h4><span id="wait_resp">-</span></h4>
+            <button onclick="doVolUp()" class="btn btn-info"><img src='volup.svg' alt="VolUp"</img></button>
+         </div>
+         <div class="col-2">
+            <button onclick="doCurrent()" class="btn btn-info"><img src='current.svg' alt="Curr"</img></button>
          </div>
       </div>
       <div class="row">
