@@ -46,7 +46,7 @@ function jsonize_music_dict() {
 
 function run_moc_cmd(script, script_args) {
   let mocp_cmd, spawn_proc;
-  console.log('running cmd ' + script);
+  // console.log('running cmd ' + script);
   mocp_cmd = init_scripts_dir + script;
 
   spawn_proc = spawn(mocp_cmd, script_args);
@@ -127,6 +127,26 @@ router.get('/mocplay', function(req, res) {
 
 router.get('/mocstop', function(req, res) {
   async_run_moc_cmd('/moc_cmd.sh', [ '--pause' ]);
+  res.send(JSON.stringify({ success : true }));
+});
+
+router.get('/mocnext', function(req, res) {
+  async_run_moc_cmd('/moc_cmd.sh', [ '--next' ]);
+  res.send(JSON.stringify({ success : true }));
+});
+
+router.get('/mocprev', function(req, res) {
+  async_run_moc_cmd('/moc_cmd.sh', [ '--previous' ]);
+  res.send(JSON.stringify({ success : true }));
+});
+
+router.get('/mocvolup', function(req, res) {
+  async_run_moc_cmd('/moc_cmd.sh', [ '--volume', '+10' ]);
+  res.send(JSON.stringify({ success : true }));
+});
+
+router.get('/mocvoldown', function(req, res) {
+  async_run_moc_cmd('/moc_cmd.sh', [ '--volume', '-10' ]);
   res.send(JSON.stringify({ success : true }));
 });
 
