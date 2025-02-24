@@ -15,7 +15,7 @@
       return rtn;
     }
 
-    function fileDiv(file_entry) {
+    function fileDiv(file_entry, is_selected) {
       var filename_tr, btn_td, buttonDiv, fn_td;
 
       btn_td = document.createElement('td');
@@ -34,6 +34,9 @@
       filename_tr = document.createElement('tr');
       filename_tr.appendChild(fn_td);
       filename_tr.appendChild(btn_td);
+      if (is_selected) {
+        filename_tr.className = 'table-info';
+      }
       return filename_tr;
     }
 
@@ -57,9 +60,8 @@
       music_thead.appendChild(music_td);
       music_table.appendChild(music_thead);
 
-      idx = 1;
       for (idx = 0; idx < payload.music_dirs.length; idx++) {
-         music_table.appendChild(fileDiv(payload.music_dirs[idx]));
+         music_table.appendChild(fileDiv(payload.music_dirs[idx], (idx == 0)));
       }
 
       musicDiv = document.getElementById('music');
@@ -115,6 +117,12 @@
     function doVolDown() {
       const req = new XMLHttpRequest();
       req.open("GET", "/mocvoldown");
+      req.send();
+    }
+    function doRefresh() {
+      const req = new XMLHttpRequest();
+      req.addEventListener("load", reqListener);
+      req.open("GET", "/mocrefresh");
       req.send();
     }
     function doInit() {
@@ -206,7 +214,7 @@
             <button onclick="doVolUp()" class="btn btn-info"><img src='volup.svg' alt="VolUp"</img></button>
          </div>
          <div class="col-2">
-            <button onclick="doCurrent()" class="btn btn-info"><img src='current.svg' alt="Curr"</img></button>
+            <button onclick="doRefresh()" class="btn btn-info"><img src='current.svg' alt="Curr"</img></button>
          </div>
       </div>
       <div class="row">

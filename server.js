@@ -15,10 +15,13 @@ const init_scripts_dir = process.env.MOC_SCRIPTS_DIR || '/home/jmemoc/programmin
 
 var current_music_dir = init_music_dir;
 var current_music_dict = {};
+var current_music_volume = 60;
 
 var find_stdout = '';
+var moc_cmd_stdout = '';
+var cmd_stdout = '';
 
-function build_payload(stdout_dirs, stdout_files) {
+function build_payload(stdout_dirs, stdout_files, status_info) {
   let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {};
 
   current_music_dict = {};
@@ -31,7 +34,7 @@ function build_payload(stdout_dirs, stdout_files) {
   for (const [key, value] of Object.entries(current_music_dict)) {
     folder_arr.push(value);
   }
-  payload = { 'music_dirs' : folder_arr, 'current_dir' : current_music_dir };
+  payload = { 'music_dirs' : folder_arr, 'current_dir' : current_music_dir, 'status_info' : status_info };
   return JSON.stringify(payload);
 }
 
@@ -46,13 +49,14 @@ function jsonize_music_dict() {
 
 function run_moc_cmd(script, script_args) {
   let mocp_cmd, spawn_proc;
-  // console.log('running cmd ' + script);
   mocp_cmd = init_scripts_dir + script;
 
+  moc_cmd_stdout = '';
   spawn_proc = spawn(mocp_cmd, script_args);
   return new Promise((resolveFunc) => {
     spawn_proc.stdout.on("data", (x) => {
-      process.stdout.write(x.toString());
+      moc_cmd_stdout = x.toString();
+      //process.stdout.write(x.toString());
     });
     spawn_proc.stderr.on("data", (x) => {
       process.stderr.write(x.toString());
@@ -65,6 +69,30 @@ function run_moc_cmd(script, script_args) {
 
 async function async_run_moc_cmd(script, script_args) {
   await run_moc_cmd(script, script_args);
+}
+
+function run_cmd(script_args) {
+  let exec_cmd, spawn_proc;
+  exec_cmd = init_scripts_dir + '/cmd.sh';
+
+  cmd_stdout = '';
+  spawn_proc = spawn(exec_cmd, script_args);
+  return new Promise((resolveFunc) => {
+    spawn_proc.stdout.on("data", (x) => {
+      cmd_stdout = x.toString();
+      // process.stdout.write(x.toString());
+    });
+    spawn_proc.stderr.on("data", (x) => {
+      process.stderr.write(x.toString());
+    });
+    spawn_proc.on("exit", (code) => {
+      resolveFunc(code);
+    });
+  });
+}
+
+async function async_run_cmd(script_args) {
+  await run_cmd(script_args);
 }
 
 function normalize_name(name) {
@@ -106,13 +134,47 @@ function do_find_cmd(is_for_dirs) {
   });
 }
 
-async function send_current_dir_contents(res) {
+async function send_moc_info(res) {
+  let moc_info_array, idx, status_info = {};
+  await run_moc_cmd('/moc_cmd.sh', [ '--info' ]);
+  if (moc_cmd_stdout == '') {
+    console.log('No moc_info_stdout value');
+    res.send(JSON.stringify({ 'success' : false }));
+    return;
+  }
+  moc_info_array = moc_cmd_stdout.split(/\r?\n|\r|\n/g);
+  for (idx = 0; idx < moc_info_array.length; idx++) {
+    let info_line, file_ent_idx, file_entry, last;
+    info_line = moc_info_array[idx];
+    file_ent_idx = info_line.indexOf('File: ');
+    if (file_ent_idx >= 0) {
+       file_entry = info_line.substring(file_ent_idx + 6, info_line.length);
+       last = file_entry.lastIndexOf('/');
+       if (last == -1) {
+         console.log("Cannot find last slash: " + file);
+       }
+       else {
+         current_music_dir = file_entry.slice(0, last);
+         status_info['file'] = file_entry.slice(last+1, file_entry.length);
+       }
+       break;
+    }
+  }
+  if ('file' in status_info) {
+    if (current_music_dir.indexOf(init_music_dir) == -1) {
+      console.log("Invalid current music_dir: " + current_music_dir);
+    }
+  }
+  send_current_dir_contents(res, null);
+}
+
+async function send_current_dir_contents(res, status_info) {
   let find_dirs_stdout, find_files_stdout;
   await do_find_cmd(true);
   find_dirs_stdout = find_stdout;
   await do_find_cmd(false);
   find_files_stdout = find_stdout;
-  res.send(build_payload(find_dirs_stdout, find_files_stdout));
+  res.send(build_payload(find_dirs_stdout, find_files_stdout, status_info));
 }
 
 // main index page
@@ -141,21 +203,23 @@ router.get('/mocprev', function(req, res) {
 });
 
 router.get('/mocvolup', function(req, res) {
-  async_run_moc_cmd('/moc_cmd.sh', [ '--volume', '+10' ]);
+  current_music_volume += 3;
+  async_run_cmd([ 'amixer', 'set', 'PCM', current_music_volume.toString()+'%' ]);
   res.send(JSON.stringify({ success : true }));
 });
 
 router.get('/mocvoldown', function(req, res) {
-  async_run_moc_cmd('/moc_cmd.sh', [ '--volume', '-10' ]);
+  current_music_volume -= 3;
+  async_run_cmd([ 'amixer', 'set', 'PCM', current_music_volume.toString()+'%' ]);
   res.send(JSON.stringify({ success : true }));
 });
 
-router.get('/mocinit', function(req, res) {
-  send_current_dir_contents(res);
+router.get('/mocrefresh', function(req, res) {
+  send_moc_info(res);
 });
 
-router.get('/mocdirs', function(req, res) {
-  send_current_dir_contents(res);
+router.get('/mocinit', function(req, res) {
+  send_current_dir_contents(res, null);
 });
 
 router.get('/mocplayfolder', function(req, res) {
@@ -167,7 +231,7 @@ router.get('/mocplayfolder', function(req, res) {
   }
   current_music_dir += "/";
   current_music_dir += dir_entry.name;
-  send_current_dir_contents(res);
+  send_current_dir_contents(res, null);
 });
 
 router.get('/mocmoveup', function(req, res) {
@@ -180,7 +244,7 @@ router.get('/mocmoveup', function(req, res) {
   if (current_music_dir != init_music_dir) {
     current_music_dir = current_music_dir.slice(0, last);
   }
-  send_current_dir_contents(res);
+  send_current_dir_contents(res, null);
 });
 
 router.get('/mocsetplaylist', function(req, res) {
