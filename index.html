@@ -21,11 +21,15 @@
       btn_td = document.createElement('td');
       btn_td.className = 'col-1';
       if (file_entry.is_dir == "true") {
-        buttonDiv = mocElement('button', 'P', 'btn btn-info btn-md');
+        buttonDiv = mocElement('button', '', 'btn btn-info');
         buttonDiv.id = file_entry.id;
         buttonDiv.onclick = function() {
           doPlayFolder(file_entry.id);
         };
+        btn_img = document.createElement('img');
+        btn_img.src = 'cassette.svg';
+        btn_img.alt = 'Play';
+        buttonDiv.appendChild(btn_img);
         btn_td.appendChild(buttonDiv);
       }
 
