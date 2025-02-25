@@ -16,7 +16,7 @@
     }
 
     function fileDiv(file_entry, is_selected) {
-      var filename_tr, btn_td, buttonDiv, fn_td;
+      var filename_tr, btn_td, buttonDiv, fn_td, selected_idx;
 
       btn_td = document.createElement('td');
       btn_td.className = 'col-1';
@@ -48,7 +48,6 @@
         console.log("No response payload");
         return;
       }
-      console.log(JSON.stringify(payload.music_dirs));
 
       music_table = document.createElement('table');
       music_table.className = 'table';
@@ -60,8 +59,18 @@
       music_thead.appendChild(music_td);
       music_table.appendChild(music_thead);
 
+      selected_idx = 0;
+      if (payload.status_info && payload.status_info.file) {
+        for (idx = 0; idx < payload.music_dirs.length; idx++) {
+          if (payload.music_dirs[idx].name == payload.status_info.file) {
+              selected_idx = idx;
+              break;
+          }
+        }
+      }
+
       for (idx = 0; idx < payload.music_dirs.length; idx++) {
-         music_table.appendChild(fileDiv(payload.music_dirs[idx], (idx == 0)));
+         music_table.appendChild(fileDiv(payload.music_dirs[idx], (idx == selected_idx)));
       }
 
       musicDiv = document.getElementById('music');
@@ -120,10 +129,20 @@
       req.send();
     }
     function doRefresh() {
-      const req = new XMLHttpRequest();
-      req.addEventListener("load", reqListener);
-      req.open("GET", "/mocrefresh");
-      req.send();
+      $.ajax({
+        url: "/mocrefresh",
+        type: "GET",
+        beforeSend: function(jqxhr, settings) {
+          document.getElementById('wait_resp').textContent = 'O';
+        },
+        error: function(jqxhr, settings, error) {
+          document.getElementById('wait_resp').textContent = 'X';
+        },
+        success: function(res) {
+          document.getElementById('wait_resp').textContent = ' ';
+          handle_response(res);
+        }
+      });
     }
     function doInit() {
       const req = new XMLHttpRequest();

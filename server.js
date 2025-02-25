@@ -148,7 +148,7 @@ async function send_moc_info(res) {
     info_line = moc_info_array[idx];
     file_ent_idx = info_line.indexOf('File: ');
     if (file_ent_idx >= 0) {
-       file_entry = info_line.substring(file_ent_idx + 6, info_line.length);
+       file_entry = info_line.substring(file_ent_idx + 6, info_line.length).trim();
        last = file_entry.lastIndexOf('/');
        if (last == -1) {
          console.log("Cannot find last slash: " + file);
@@ -163,9 +163,11 @@ async function send_moc_info(res) {
   if ('file' in status_info) {
     if (current_music_dir.indexOf(init_music_dir) == -1) {
       console.log("Invalid current music_dir: " + current_music_dir);
+      // The current music dir is invalid so reset it to avoid error.
+      current_music_dir = init_music_dir;
     }
   }
-  send_current_dir_contents(res, null);
+  send_current_dir_contents(res, status_info);
 }
 
 async function send_current_dir_contents(res, status_info) {
