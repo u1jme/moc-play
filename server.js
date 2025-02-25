@@ -21,32 +21,6 @@ var find_stdout = '';
 var moc_cmd_stdout = '';
 var cmd_stdout = '';
 
-function build_payload(stdout_dirs, stdout_files, status_info) {
-  let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {};
-
-  current_music_dict = {};
-
-  stdout_dirs_array = stdout_dirs.split(/\r?\n|\r|\n/g);
-  append_music_dict(stdout_dirs_array, 1);
-  stdout_files_array = stdout_files.split(/\r?\n|\r|\n/g);
-  append_music_dict(stdout_files_array, 0);
-
-  for (const [key, value] of Object.entries(current_music_dict)) {
-    folder_arr.push(value);
-  }
-  payload = { 'music_dirs' : folder_arr, 'current_dir' : current_music_dir, 'status_info' : status_info };
-  return JSON.stringify(payload);
-}
-
-function jsonize_music_dict() {
-  let folder_arr = [];
-  for (const [key, value] of Object.entries(current_music_dict)) {
-    let folder = { 'name': value, 'id': key, 'is_dir': (is_for_dirs ? 'true' : 'false') };
-    folder_arr.push(folder);
-  }
-  return JSON.stringify(folder_arr);
-}
-
 function run_moc_cmd(script, script_args) {
   let mocp_cmd, spawn_proc;
   mocp_cmd = init_scripts_dir + script;
@@ -168,6 +142,23 @@ async function send_moc_info(res) {
     }
   }
   send_current_dir_contents(res, status_info);
+}
+
+function build_payload(stdout_dirs, stdout_files, status_info) {
+  let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {};
+
+  current_music_dict = {};
+
+  stdout_dirs_array = stdout_dirs.split(/\r?\n|\r|\n/g);
+  append_music_dict(stdout_dirs_array, 1);
+  stdout_files_array = stdout_files.split(/\r?\n|\r|\n/g);
+  append_music_dict(stdout_files_array, 0);
+
+  for (const [key, value] of Object.entries(current_music_dict)) {
+    folder_arr.push(value);
+  }
+  payload = { 'music_dirs' : folder_arr, 'current_dir' : current_music_dir, 'status_info' : status_info };
+  return JSON.stringify(payload);
 }
 
 async function send_current_dir_contents(res, status_info) {
