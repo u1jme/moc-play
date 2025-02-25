@@ -46,7 +46,7 @@
 
     function handle_response(responseText) {
       var payload, musicFile, musicFileNorm, idx, musicDiv,
-        music_table, music_thead, music_td;
+        music_table, music_thead, music_tbody, music_td;
       payload = JSON.parse(responseText);
       if (!payload) {
         console.log("No response payload");
@@ -55,6 +55,7 @@
 
       music_table = document.createElement('table');
       music_table.className = 'table';
+      music_table.id = 'music_table';
       music_thead = document.createElement('thead');
       music_thead.className = 'thead-dark';
       music_td = document.createElement('tr');
@@ -63,7 +64,7 @@
       music_thead.appendChild(music_td);
       music_table.appendChild(music_thead);
 
-      selected_idx = 0;
+      selected_idx = -1;
       if (payload.status_info && payload.status_info.file) {
         for (idx = 0; idx < payload.dir_entries.length; idx++) {
           if (payload.dir_entries[idx].name == payload.status_info.file) {
@@ -73,9 +74,11 @@
         }
       }
 
+      music_tbody = document.createElement('tbody');
       for (idx = 0; idx < payload.dir_entries.length; idx++) {
-         music_table.appendChild(fileDiv(payload.dir_entries[idx], (idx == selected_idx)));
+         music_tbody.appendChild(fileDiv(payload.dir_entries[idx], (idx == selected_idx)));
       }
+      music_table.appendChild(music_tbody);
 
       musicDiv = document.getElementById('music');
       if (musicDiv) {
@@ -187,6 +190,7 @@
           document.getElementById('wait_resp').textContent = 'X';
         },
         success: function(res) {
+          $('#music_table tbody tr:first').addClass('table-info');
           document.getElementById('wait_resp').textContent = ' ';
         }
       });
