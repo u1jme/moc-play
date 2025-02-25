@@ -65,16 +65,16 @@
 
       selected_idx = 0;
       if (payload.status_info && payload.status_info.file) {
-        for (idx = 0; idx < payload.music_dirs.length; idx++) {
-          if (payload.music_dirs[idx].name == payload.status_info.file) {
+        for (idx = 0; idx < payload.dir_entries.length; idx++) {
+          if (payload.dir_entries[idx].name == payload.status_info.file) {
               selected_idx = idx;
               break;
           }
         }
       }
 
-      for (idx = 0; idx < payload.music_dirs.length; idx++) {
-         music_table.appendChild(fileDiv(payload.music_dirs[idx], (idx == selected_idx)));
+      for (idx = 0; idx < payload.dir_entries.length; idx++) {
+         music_table.appendChild(fileDiv(payload.dir_entries[idx], (idx == selected_idx)));
       }
 
       musicDiv = document.getElementById('music');

@@ -145,7 +145,7 @@ async function send_moc_info(res) {
 }
 
 function build_payload(stdout_dirs, stdout_files, status_info) {
-  let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {};
+  let idx, stdout_dirs_array, stdout_files_array, folder_arr = [], payload = {}, pretty_current_dir;
 
   current_music_dict = {};
 
@@ -157,7 +157,8 @@ function build_payload(stdout_dirs, stdout_files, status_info) {
   for (const [key, value] of Object.entries(current_music_dict)) {
     folder_arr.push(value);
   }
-  payload = { 'music_dirs' : folder_arr, 'current_dir' : current_music_dir, 'status_info' : status_info };
+  pretty_current_dir = current_music_dir.replace(init_music_dir, '');
+  payload = { 'dir_entries' : folder_arr, 'current_dir' : pretty_current_dir, 'status_info' : status_info };
   return JSON.stringify(payload);
 }
 
