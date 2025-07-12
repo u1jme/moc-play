@@ -10,8 +10,8 @@ const port = process.env.PORT || 8080;
 // get an instance of router
 const router = express.Router();
 
-const init_music_dir = process.env.MOC_INIT_DIR || '/home/jmemoc/Music/all';
-const init_scripts_dir = process.env.MOC_SCRIPTS_DIR || '/home/jmemoc/programming/moc-play/scripts'
+const init_music_dir = process.env.MOC_INIT_DIR || '/usr/local/share/music';
+const init_scripts_dir = process.env.MOC_SCRIPTS_DIR || '/usr/local/share/moc-play/scripts'
 
 var current_music_dir = init_music_dir;
 var current_music_dict = {};
@@ -213,6 +213,7 @@ router.get('/mocrefresh', function(req, res) {
 });
 
 router.get('/mocinit', function(req, res) {
+  async_run_moc_cmd('/moc_shutdown.sh', [ '--clear' ]);
   send_current_dir_contents(res, null);
 });
 
